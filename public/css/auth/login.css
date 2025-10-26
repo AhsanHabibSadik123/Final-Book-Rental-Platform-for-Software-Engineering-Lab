@@ -1,0 +1,49 @@
+/* Login page styles - Bootstrap-first; minimal customizations for a polished look */
+
+:root {
+  --brand-start: #667eea; /* indigo */
+  --brand-end: #764ba2;   /* purple */
+  --bg-deep: #556a7e;     /* site background gradient */
+}
+
+/* Navbar consistent gradient */
+.admin-navbar {
+  background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+.admin-navbar .navbar-brand { color: #fff !important; font-weight: 600; }
+.admin-navbar .nav-link { color: #fff !important; }
+
+/* Page hero background */
+.login-hero {
+  background: linear-gradient(135deg, var(--bg-deep) 0%, var(--bg-deep) 100%);
+}
+
+/* Card polish */
+.login-card {
+  border-radius: 1rem;
+  overflow: hidden;
+}
+
+/* Branded header band inside the card */
+.login-header {
+  background: linear-gradient(135deg, var(--brand-start) 0%, var(--brand-end) 100%);
+}
+
+/* Primary gradient button */
+.btn-gradient {
+  background: linear-gradient(135deg, var(--brand-start) 0%, var(--brand-end) 100%);
+  border: none;
+}
+.btn-gradient:hover,
+.btn-gradient:focus { filter: brightness(0.95); }
+
+/* Inputs */
+.form-control, .form-select, .form-check-input { border-radius: .5rem; }
+.form-control:focus, .form-select:focus {
+  box-shadow: 0 0 0 .2rem rgba(102, 126, 234, .25);
+  border-color: var(--brand-start);
+}
+
+/* Alerts spacing */
+.alert ul { margin-bottom: 0; }
