@@ -36,6 +36,7 @@
                     <li class="mb-2"><a href="/" class="link-light text-decoration-none">Home</a></li>
                     <li class="mb-2"><a href="#features" class="link-light text-decoration-none">Features</a></li>
                     <li class="mb-2"><a href="#how-it-works" class="link-light text-decoration-none">How it Works</a></li>
+                    <li class="mb-2"><a href="{{ route('terms') }}" class="link-light text-decoration-none">Terms & Conditions</a></li>
                 </ul>
             </div>
             <div class="col-md-3">

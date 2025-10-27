@@ -20,20 +20,20 @@ class AdminController extends Controller
         }
 
         $totalBooks = Book::count();
-        
+
         $availableBooks = Book::where('status', 'available')->count();
-            
+
         $rentedBooks = Book::where('status', 'rented')->count();
-        
+
         $totalUsers = User::where('role', '!=', 'admin')->count();
-        
+
         $recentBooks = Book::with('lender')
             ->orderBy('created_at', 'desc')
             ->limit(5)
             ->get();
 
         return view('admin.adminDashboard', compact(
-            'totalBooks', 
+            'totalBooks',
             'availableBooks',
             'rentedBooks',
             'totalUsers',
@@ -47,10 +47,10 @@ class AdminController extends Controller
             abort(403, 'Access denied. Admin only.');
         }
 
-    $status = $request->get('status', 'all');
-    $search = $request->get('search');
-        
-    $query = Book::with(['lender', 'currentRental.borrower']);
+        $status = $request->get('status', 'all');
+        $search = $request->get('search');
+
+        $query = Book::with(['lender', 'currentRental.borrower']);
 
         switch ($status) {
             case 'available':
@@ -113,9 +113,9 @@ class AdminController extends Controller
         $book->condition = $request->condition;
         $book->rental_price_per_day = $request->rental_price_per_day;
         $book->security_deposit = $request->security_deposit;
-    $book->status = 'available';
-    // Fallback to current admin if no lender selected (DB requires non-null lender_id)
-    $book->lender_id = $request->lender_id ?: Auth::id();
+        $book->status = 'available';
+        // Fallback to current admin if no lender selected (DB requires non-null lender_id)
+        $book->lender_id = $request->lender_id ?: Auth::id();
 
         // Handle image upload (save to public/upload)
         if ($request->hasFile('image')) {
@@ -177,8 +177,16 @@ class AdminController extends Controller
         ]);
 
         $data = $request->only([
-            'title', 'author', 'isbn', 'description', 'genre',
-            'condition', 'status', 'rental_price_per_day', 'security_deposit', 'lender_id'
+            'title',
+            'author',
+            'isbn',
+            'description',
+            'genre',
+            'condition',
+            'status',
+            'rental_price_per_day',
+            'security_deposit',
+            'lender_id'
         ]);
         // Prevent accidentally nulling lender_id (HTML may submit empty string)
         if (empty($data['lender_id'])) {
@@ -262,9 +270,9 @@ class AdminController extends Controller
             return back()->with('error', 'Active rental not found for this book.');
         }
 
-    $borrower = $rental->borrower; // user who rented
-    $lender = $book->lender;       // book owner
-    $adminUser = User::find(Auth::id()); // performing admin as model
+        $borrower = $rental->borrower; // user who rented
+        $lender = $book->lender;       // book owner
+        $adminUser = User::find(Auth::id()); // performing admin as model
 
         // Determine rental days and cost
         $days = (int)($rental->rental_days ?? 0);
@@ -280,8 +288,8 @@ class AdminController extends Controller
         $deposit = (float) $rental->security_deposit;
 
         // Calculate shares
-    $ownerShare = round($rentalCost * 0.80, 2);
-    $adminShare = round($rentalCost - $ownerShare, 2); // ensure sum consistency
+        $ownerShare = round($rentalCost * 0.80, 2);
+        $adminShare = round($rentalCost - $ownerShare, 2); // ensure sum consistency
 
         // Detect if rental was prepaid at checkout
         $prepaid = is_string($rental->notes ?? null) && strpos($rental->notes, 'prepaid=1') !== false;
@@ -294,15 +302,27 @@ class AdminController extends Controller
 
         DB::transaction(function () use ($book, $rental, $borrower, $lender, $adminUser, $deposit, $extraDue, $ownerShare, $adminShare, $rentalCost, $prepaid) {
             // Normalize wallets
-            if ($borrower) { $borrower->wallet = (float) $borrower->wallet; }
-            if ($lender) { $lender->wallet = (float) $lender->wallet; }
-            if ($adminUser) { $adminUser->wallet = (float) $adminUser->wallet; }
+            if ($borrower) {
+                $borrower->wallet = (float) $borrower->wallet;
+            }
+            if ($lender) {
+                $lender->wallet = (float) $lender->wallet;
+            }
+            if ($adminUser) {
+                $adminUser->wallet = (float) $adminUser->wallet;
+            }
 
             if ($prepaid) {
                 // Rental was prepaid: refund full deposit and distribute rental cost shares
-                if ($borrower) { $borrower->wallet += $deposit; }
-                if ($lender) { $lender->wallet += $ownerShare; }
-                if ($adminUser) { $adminUser->wallet += $adminShare; }
+                if ($borrower) {
+                    $borrower->wallet += $deposit;
+                }
+                if ($lender) {
+                    $lender->wallet += $ownerShare;
+                }
+                if ($adminUser) {
+                    $adminUser->wallet += $adminShare;
+                }
             } else {
                 // Charge borrower extra if deposit insufficient
                 if ($extraDue > 0 && $borrower) {
@@ -324,9 +344,15 @@ class AdminController extends Controller
                 }
             }
 
-            if ($lender) { $lender->save(); }
-            if ($adminUser) { $adminUser->save(); }
-            if ($borrower) { $borrower->save(); }
+            if ($lender) {
+                $lender->save();
+            }
+            if ($adminUser) {
+                $adminUser->save();
+            }
+            if ($borrower) {
+                $borrower->save();
+            }
 
             // Mark the book as available and remove rental
             $book->status = 'available';
@@ -336,7 +362,7 @@ class AdminController extends Controller
         });
 
         return redirect()->route('admin.books', ['status' => 'available'])
-            ->with('success', 'Book returned. Owner received $'.number_format($ownerShare,2).', admin received $'.number_format($adminShare,2).'.');
+            ->with('success', 'Book returned. Owner received $' . number_format($ownerShare, 2) . ', admin received $' . number_format($adminShare, 2) . '.');
     }
 
     /**
@@ -358,10 +384,10 @@ class AdminController extends Controller
 
         // Add search functionality
         if ($search) {
-            $query->where(function($q) use ($search) {
+            $query->where(function ($q) use ($search) {
                 $q->where('name', 'LIKE', "%{$search}%")
-                  ->orWhere('email', 'LIKE', "%{$search}%")
-                  ->orWhere('phone', 'LIKE', "%{$search}%");
+                    ->orWhere('email', 'LIKE', "%{$search}%")
+                    ->orWhere('phone', 'LIKE', "%{$search}%");
             });
         }
 
@@ -408,7 +434,7 @@ class AdminController extends Controller
         }
 
         $user->loadCount(['books', 'rentalsAsBorrower', 'rentalsAsLender']);
-        
+
         // Get user's recent activity
         $recentBooks = $user->books()->latest()->limit(5)->get();
         $recentRentals = $user->rentalsAsBorrower()->with('book')->latest()->limit(5)->get();
@@ -464,56 +490,6 @@ class AdminController extends Controller
 
         return back()->with('success', "User {$user->name} has been {$newStatus} successfully!");
     }
-
-    /**
-     * Update user role
-     */
-    public function updateUserRole(Request $request, User $user)
-    {
-        // Check if user is admin
-        if (!Auth::check() || Auth::user()->role !== 'admin') {
-            abort(403, 'Access denied. Admin only.');
-        }
-
-        // Don't allow modifying admin users
-        if ($user->role === 'admin') {
-            abort(403, 'Cannot modify admin users.');
-        }
-
-        $request->validate([
-            'role' => 'required|in:user',
-            'admin_notes' => 'nullable|string|max:1000',
-        ]);
-
-        $oldRole = $user->role;
-        $newRole = $request->role;
-
-        $user->update([
-            'role' => $newRole,
-        ]);
-
-        Log::info('User role updated by admin', [
-            'admin_id' => Auth::id(),
-            'user_id' => $user->id,
-            'user_name' => $user->name,
-            'old_role' => $oldRole,
-            'new_role' => $newRole,
-            'admin_notes' => $request->admin_notes,
-        ]);
-
-        // Check if this is an AJAX request
-        if ($request->ajax()) {
-            return response()->json([
-                'success' => true,
-                'message' => "User role updated from {$oldRole} to {$newRole} successfully!",
-                'new_role' => $newRole,
-                'user_id' => $user->id
-            ]);
-        }
-
-        return back()->with('success', "User {$user->name} role has been changed from {$oldRole} to {$newRole} successfully!");
-    }
-
     /**
      * Update user wallet balance
      */
@@ -560,7 +536,6 @@ class AdminController extends Controller
                 break;
             default:
                 return back()->with('error', 'Invalid wallet action.');
-                
         }
 
         $user->update([

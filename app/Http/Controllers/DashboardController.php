@@ -80,7 +80,7 @@ class DashboardController extends Controller
             $user->save();
 
             return redirect()->route('profile')->with('success', 'Profile updated successfully!');
-    } catch (\Throwable $e) {
+        } catch (\Throwable $e) {
             // Log the error for debugging and show a friendly message
             Log::error('Profile update failed', [
                 'user_id' => $user->id,
@@ -116,65 +116,16 @@ class DashboardController extends Controller
     public function userDashboard(Request $request)
     {
         $user = Auth::user();
-        
-    // Get user statistics (borrower-centric)
-    $stats = $this->getUserStats($user);
+        // Lender-specific list removed in two-role model; keep for view compatibility as empty
+        $myBooks = collect();
 
-    // Lender-specific list removed in two-role model; keep for view compatibility as empty
-    $myBooks = collect();
+        // Get user's rentals (as borrower)
+        $myRentals = Rental::where('borrower_id', $user->id)
+            ->with(['book', 'book.lender'])
+            ->latest()
+            ->take(5)
+            ->get();
 
-    // Get user's rentals (as borrower)
-    $myRentals = Rental::where('borrower_id', $user->id)
-              ->with(['book', 'book.lender'])
-              ->latest()
-              ->take(5)
-              ->get();
-
-    return view('user.userDashboard', compact('stats', 'myBooks', 'myRentals'));
-    }
-    
-    /**
-     * Get comprehensive user statistics from database
-     */
-    private function getUserStats($user)
-    {
-    // Rental statistics (as borrower)
-        $myRentals = Rental::where('borrower_id', $user->id)->count();
-        $activeRentals = Rental::where('borrower_id', $user->id)
-                              ->where('status', 'active')
-                              ->count();
-        
-        // Due soon rentals (due within next 7 days)
-        $dueSoon = Rental::where('borrower_id', $user->id)
-                        ->where('status', 'active')
-                        ->where('rental_end_date', '<=', Carbon::now()->addDays(7))
-                        ->where('rental_end_date', '>=', Carbon::now())
-                        ->count();
-        
-        // Total spent on rentals
-        $totalSpent = Rental::where('borrower_id', $user->id)
-                           ->where('status', 'completed')
-                           ->sum('total_amount');
-        
-        // Overdue rentals
-        $overdueRentals = Rental::where('borrower_id', $user->id)
-                               ->where('status', 'active')
-                               ->where('rental_end_date', '<', Carbon::now())
-                               ->count();
-        
-        // Total available books in system
-        $totalAvailableBooks = Book::where('status', 'available')->count();
-        
-        return [
-            // Borrower stats
-            'my_rentals' => $myRentals,
-            'active_rentals' => $activeRentals,
-            'due_soon' => $dueSoon,
-            'total_spent' => $totalSpent,
-            'overdue_rentals' => $overdueRentals,
-            
-            // General stats
-            'total_available_books' => $totalAvailableBooks,
-        ];
+        return view('user.userDashboard', compact('myBooks', 'myRentals'));
     }
 }

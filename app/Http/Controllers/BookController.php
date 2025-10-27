@@ -186,25 +186,6 @@ class BookController extends Controller
         return view('user.browseBooks', compact('books', 'search', 'category'));
     }
 
-    // Borrower home page - same as browse but for home route
-    public function home(Request $request)
-    {
-        $search = $request->get('search');
-        $query = Book::where('status', 'available')
-            ->with('lender');
-        if ($search) {
-            $query->where(function ($q) use ($search) {
-                $q->where('title', 'LIKE', "%{$search}%")
-                    ->orWhere('author', 'LIKE', "%{$search}%")
-                    ->orWhere('genre', 'LIKE', "%{$search}%")
-                    ->orWhere('description', 'LIKE', "%{$search}%");
-            });
-        }
-        $books = $query->latest()->paginate(12);
-        $totalBooks = Book::where('status', 'available')->count();
-        return view('user.home', compact('books', 'search', 'totalBooks'));
-    }
-
     // Show the rent form for a book (user action)
     public function showRentForm(Book $book)
     {
